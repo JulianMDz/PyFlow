@@ -8,3 +8,6 @@ venv/
 htmlcov/
 node_modules/
 frontend/dist/
+docs/
+CLAUDE.md
+
