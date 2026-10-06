@@ -2,13 +2,14 @@ import uuid
 from datetime import UTC, date, datetime, timedelta
 from decimal import ROUND_DOWN, Decimal
 
-from sqlalchemy import and_, exists, or_, select
+from sqlalchemy import exists, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import joinedload, selectinload
 
 from app.db.models import Installment, Merchant, Order, Payment, User
-from app.db.schemas import OrderCreateRequest
+from app.db.schemas import OrderCreateRequest, OrderStatus
 from app.services.exceptions import BusinessRuleError, ConflictError, NotFoundError
+from app.services.installment_rules import is_overdue
 
 INSTALLMENT_INTERVAL = timedelta(days=14)
 CENT = Decimal("0.01")
@@ -45,17 +46,11 @@ def build_due_dates(start: date, num_installments: int) -> list[date]:
 async def user_has_overdue_installments(
     db: AsyncSession, user_id: uuid.UUID, today: date
 ) -> bool:
-    # Also counts pending installments already past due, so the rule holds even
-    # if the overdue check has not run yet today.
-    is_overdue = or_(
-        Installment.status == "overdue",
-        and_(Installment.status == "pending", Installment.due_date < today),
-    )
     stmt = select(
         exists()
         .where(Installment.order_id == Order.order_id)
         .where(Order.user_id == user_id)
-        .where(is_overdue)
+        .where(is_overdue(today))
     )
     return bool(await db.scalar(stmt))
 
@@ -80,6 +75,27 @@ async def get_order(db: AsyncSession, order_id: uuid.UUID, *, lock: bool = False
     if order is None:
         raise NotFoundError("Order not found")
     return order
+
+
+async def list_orders(
+    db: AsyncSession, status: OrderStatus | None, limit: int, offset: int
+) -> tuple[list[Order], int]:
+    """Newest first, with installments, user and merchant loaded; also returns the total count."""
+    filters = [Order.status == status] if status else []
+    total = await db.scalar(select(func.count()).select_from(Order).where(*filters))
+    orders = await db.scalars(
+        select(Order)
+        .where(*filters)
+        .options(
+            selectinload(Order.installments),
+            joinedload(Order.user),
+            joinedload(Order.merchant),
+        )
+        .order_by(Order.created_at.desc(), Order.order_id)
+        .limit(limit)
+        .offset(offset)
+    )
+    return list(orders.all()), total or 0
 
 
 async def create_order(

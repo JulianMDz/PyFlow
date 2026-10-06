@@ -95,6 +95,18 @@ class OrderDetailResponse(OrderResponse):
     installments: list[InstallmentResponse]
 
 
+class OrderListItemResponse(OrderDetailResponse):
+    user: UserResponse
+    merchant: MerchantResponse
+
+
+class OrderPageResponse(BaseModel):
+    items: list[OrderListItemResponse]
+    total: int
+    limit: int
+    offset: int
+
+
 # ---------- Payments ----------
 
 
@@ -135,6 +147,37 @@ class RiskAssessmentResponse(BaseModel):
     source: RiskSource
     llm_model: str | None
     features: RiskFeatures
+
+
+# ---------- Analytics ----------
+
+
+class RevenueTotals(BaseModel):
+    orders: int
+    gmv: Decimal = Field(description="Value of non-cancelled orders created in the period")
+    revenue: Decimal = Field(description="Merchant commissions on those orders")
+    collected: Decimal = Field(description="Installment payments processed in the period")
+
+
+class RevenueMonth(RevenueTotals):
+    month: str = Field(description="YYYY-MM, UTC")
+
+
+class RevenueReportResponse(BaseModel):
+    start: date
+    end: date
+    totals: RevenueTotals
+    by_month: list[RevenueMonth]
+
+
+class DashboardSummaryResponse(BaseModel):
+    as_of: date
+    active_orders: int
+    total_revenue: Decimal
+    overdue_installments: int
+    on_time_payment_rate: float | None = Field(
+        description="Paid on time / installments already due (paid or overdue); null if none"
+    )
 
 
 # ---------- Health ----------

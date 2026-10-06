@@ -11,6 +11,9 @@ class Settings(BaseSettings):
     GROQ_MODEL: str = "qwen/qwen3.8-27b"
     API_V1_PREFIX: str = "/api/v1"
     SQL_ECHO: bool = False
+    # Browser origins allowed to call the API (the Vite dev server by default).
+    # localhost and 127.0.0.1 are different origins for the browser, so both are listed.
+    CORS_ORIGINS: list[str] = ["http://localhost:5173", "http://127.0.0.1:5173"]
 
 
 @lru_cache

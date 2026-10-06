@@ -1,4 +1,5 @@
 from fastapi import Depends, FastAPI, Request, status
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
@@ -14,6 +15,13 @@ app = FastAPI(
     title="PayFlow",
     description="BNPL payment API — split purchases into interest-free installments.",
     version="0.1.0",
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.CORS_ORIGINS,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 DOMAIN_ERROR_STATUS: dict[type[DomainError], int] = {

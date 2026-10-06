@@ -7,13 +7,14 @@ from typing import Annotated
 
 from groq import APIError, AsyncGroq
 from pydantic import BaseModel, Field, ValidationError, field_validator
-from sqlalchemy import Date, and_, cast, func, or_, select
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.db.models import Installment, Order
 from app.db.schemas import Recommendation, RiskAssessmentResponse, RiskFeatures, RiskLevel
 from app.services.exceptions import NotFoundError
+from app.services.installment_rules import is_overdue, is_paid_late, is_paid_on_time
 from app.services.order_service import CENT, today_utc
 
 logger = logging.getLogger(__name__)
@@ -86,19 +87,11 @@ async def build_risk_features(db: AsyncSession, order: Order, today: date) -> Ri
         )
     ).one()
 
-    paid_on = cast(func.timezone("UTC", Installment.paid_at), Date)
-    is_paid = Installment.status == "paid"
     on_time, late, active = (
         await db.execute(
             select(
-                func.count().filter(and_(is_paid, paid_on <= Installment.due_date)),
-                func.count().filter(
-                    or_(
-                        and_(is_paid, paid_on > Installment.due_date),
-                        Installment.status == "overdue",
-                        and_(Installment.status == "pending", Installment.due_date < today),
-                    )
-                ),
+                func.count().filter(is_paid_on_time()),
+                func.count().filter(or_(is_paid_late(), is_overdue(today))),
                 func.count().filter(Installment.status.in_(("pending", "overdue"))),
             )
             .join(Order, Installment.order_id == Order.order_id)
