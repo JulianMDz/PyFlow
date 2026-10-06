@@ -1,0 +1,33 @@
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    env_file: .env
+    environment:
+      # Inside the compose network the DB host is "db", not localhost
+      DATABASE_URL: postgresql+asyncpg://payflow:payflow@db:5432/payflow
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - .:/app
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: payflow
+      POSTGRES_PASSWORD: payflow
+      POSTGRES_DB: payflow
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U payflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:
