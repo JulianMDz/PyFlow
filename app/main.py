@@ -1,4 +1,6 @@
-from fastapi import Depends, FastAPI, Request, status
+from collections.abc import Awaitable, Callable
+
+from fastapi import Depends, FastAPI, Request, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy import text
@@ -23,6 +25,28 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+SECURITY_HEADERS = {
+    # Orders and risk decisions are personal financial data: never store them in caches
+    "Cache-Control": "no-store",
+    # Other sites get at most our origin, never a path with an order ID
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+    # Browsers only honor this over HTTPS, so it's inert in local development
+    "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+}
+
+
+@app.middleware("http")
+async def add_security_headers(
+    request: Request, call_next: Callable[[Request], Awaitable[Response]]
+) -> Response:
+    response = await call_next(request)
+    for name, value in SECURITY_HEADERS.items():
+        response.headers.setdefault(name, value)
+    return response
+
 
 DOMAIN_ERROR_STATUS: dict[type[DomainError], int] = {
     NotFoundError: status.HTTP_404_NOT_FOUND,

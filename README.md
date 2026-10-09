@@ -12,7 +12,7 @@ PayFlow is a complete, tested reference implementation of an installment-payment
 - **No double charges:** every payment locks its order row. Measured against the running API, removing the lock let concurrent requests create 26 payments for 6 installments; with it, exactly 6.
 - **Clear lifecycle:** installments go `pending → paid` or `pending → overdue → paid`. Orders complete themselves, and customers with overdue debt can't buy again. The daily overdue job is idempotent.
 - **AI you can audit:** the LLM only sees aggregated, non-personal numbers. Its JSON is validated against a schema, thresholds and hard rules live in code, and a deterministic scorer takes over if the model is down.
-- **Tested:** 181 tests against a real Postgres database, with 100% backend coverage. Six deliberately injected bugs were all caught, and ruff and mypy are clean.
+- **Tested:** 185 tests against a real Postgres database, with 100% backend coverage. Six deliberately injected bugs were all caught, and ruff and mypy are clean.
 
 ## Quick start
 
@@ -62,7 +62,7 @@ flowchart LR
   2. The model answers in JSON (`temperature=0.1`, 8 s timeout).
   3. Pydantic validates the answer.
   4. Code turns the score into approve, review or deny, and late payers never get an automatic approval.
-- **Architecture:** business rules live in services that know nothing about HTTP. Domain errors map to `404`, `409` and `422` in a single place, and every schema change is an Alembic migration.
+- **Architecture:** business rules live in services that know nothing about HTTP. Domain errors map to `404`, `409` and `422` in a single place, every response carries security headers (`Cache-Control: no-store`, `Referrer-Policy`, `nosniff`, HSTS), and every schema change is an Alembic migration.
 
 | Area | Endpoints (under `/api/v1`) |
 | --- | --- |
@@ -74,7 +74,7 @@ flowchart LR
 ## Tests and quality
 
 ```bash
-docker compose exec app pytest --cov            # 181 tests, 100% coverage of app/
+docker compose exec app pytest --cov            # 185 tests, 100% coverage of app/
 docker compose exec app ruff check .            # lint
 docker compose exec app mypy app scripts        # types
 ```
