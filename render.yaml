@@ -1,0 +1,58 @@
+# Render Blueprint: the API and the dashboard in one go (New → Blueprint → pick this repo).
+# The database lives in Neon (free, doesn't expire): create it first and paste its URL below.
+# Values marked "sync: false" are asked for when the Blueprint is created.
+
+services:
+  - type: web
+    name: payflow-api
+    runtime: docker
+    plan: free
+    region: virginia # same area as Neon's aws-us-east-1 and GitHub's runners
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    # Changes that can't affect the running API don't redeploy it
+    buildFilter:
+      ignoredPaths:
+        - frontend/**
+        - assets/**
+        - tests/**
+        - .github/**
+        - "**/*.md"
+    envVars:
+      - key: DATABASE_URL # Neon's direct connection string (not the -pooler one)
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: CORS_ORIGINS # the dashboard's URL, e.g. https://payflow-dashboard.onrender.com
+        sync: false
+      - key: DEMO_MODE
+        value: "true"
+      - key: RISK_CHECKS_PER_MINUTE
+        value: "5"
+
+  - type: web
+    name: payflow-dashboard
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_URL # the API's URL + /api/v1, e.g. https://payflow-api.onrender.com/api/v1
+        sync: false
+      - key: NODE_VERSION
+        value: "22"
+    routes:
+      # Client-side routing: /orders or /risk?order=… must load the app, not a 404
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    headers:
+      - path: /*
+        name: Referrer-Policy
+        value: strict-origin-when-cross-origin
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: X-Frame-Options
+        value: DENY

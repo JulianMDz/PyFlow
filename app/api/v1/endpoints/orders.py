@@ -4,6 +4,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.deps import forbid_in_demo
 from app.db.models import Order
 from app.db.schemas import OrderCreateRequest, OrderDetailResponse, OrderPageResponse, OrderStatus
 from app.db.session import get_db
@@ -25,7 +26,12 @@ async def list_orders(
     )
 
 
-@router.post("/", response_model=OrderDetailResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/",
+    response_model=OrderDetailResponse,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(forbid_in_demo)],
+)
 async def create_order(payload: OrderCreateRequest, db: AsyncSession = Depends(get_db)) -> Order:
     return await order_service.create_order(db, payload)
 
@@ -35,6 +41,10 @@ async def get_order(order_id: uuid.UUID, db: AsyncSession = Depends(get_db)) -> 
     return await order_service.get_order(db, order_id)
 
 
-@router.patch("/{order_id}/cancel", response_model=OrderDetailResponse)
+@router.patch(
+    "/{order_id}/cancel",
+    response_model=OrderDetailResponse,
+    dependencies=[Depends(forbid_in_demo)],
+)
 async def cancel_order(order_id: uuid.UUID, db: AsyncSession = Depends(get_db)) -> Order:
     return await order_service.cancel_order(db, order_id)

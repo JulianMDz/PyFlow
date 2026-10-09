@@ -12,7 +12,7 @@ PayFlow is a complete, tested reference implementation of an installment-payment
 - **No double charges:** every payment locks its order row. Measured against the running API, removing the lock let concurrent requests create 26 payments for 6 installments; with it, exactly 6.
 - **Clear lifecycle:** installments go `pending → paid` or `pending → overdue → paid`. Orders complete themselves, and customers with overdue debt can't buy again. The daily overdue job is idempotent.
 - **AI you can audit:** the LLM only sees aggregated, non-personal numbers. Its JSON is validated against a schema, thresholds and hard rules live in code, and a deterministic scorer takes over if the model is down.
-- **Tested:** 185 tests against a real Postgres database, with 100% backend coverage. Six deliberately injected bugs were all caught, and ruff and mypy are clean.
+- **Tested:** 204 tests against a real Postgres database, with 100% backend coverage. Six deliberately injected bugs were all caught, and ruff and mypy are clean.
 
 ## Quick start
 
@@ -42,7 +42,7 @@ cd frontend && npm install && npm run dev             # dashboard: http://localh
 | Risk thresholds and hard rules | `risk_level_for` and `LATE_PAYMENT_SCORE_FLOOR` in `app/services/ai_service.py` |
 | LLM model or prompt | `GROQ_MODEL` in `.env`, `RISK_PROMPT` in `app/services/ai_service.py` |
 | Currency shown in the dashboard | `frontend/src/lib/format.ts` |
-| Dashboard origins allowed by the API | `CORS_ORIGINS='["https://app.example.com"]'` in `.env` |
+| Dashboard origins allowed by the API | `CORS_ORIGINS=https://app.example.com` in `.env` (comma-separated) |
 
 ## How it works
 
@@ -74,7 +74,7 @@ flowchart LR
 ## Tests and quality
 
 ```bash
-docker compose exec app pytest --cov            # 185 tests, 100% coverage of app/
+docker compose exec app pytest --cov            # 204 tests, 100% coverage of app/
 docker compose exec app ruff check .            # lint
 docker compose exec app mypy app scripts        # types
 ```
@@ -91,4 +91,4 @@ Python 3.12 · FastAPI · SQLAlchemy 2.0 (async) · PostgreSQL 16 · Alembic · 
 
 ## Roadmap
 
-Authentication · idempotency keys for payments · CI pipeline · production Docker image · audit log of risk assessments · partial payments, refunds and late fees.
+Authentication · idempotency keys for payments · CI pipeline · audit log of risk assessments · partial payments, refunds and late fees.

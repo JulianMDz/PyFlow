@@ -6,3 +6,10 @@ __pycache__/
 venv/
 .pytest_cache/
 frontend/
+.coverage
+htmlcov/
+.ruff_cache/
+.mypy_cache/
+docs/
+assets/
+CLAUDE.md

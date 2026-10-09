@@ -1,0 +1,31 @@
+# Loads fresh demo data into the deployed database: once by hand after the first deploy,
+# then every Monday so the demo stays current and anything odd gets wiped.
+# Needs the repository secret DEMO_DATABASE_URL: the same Neon URL the API uses.
+name: Demo data
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 6 * * 1"
+
+jobs:
+  seed:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      DATABASE_URL: ${{ secrets.DEMO_DATABASE_URL }}
+    steps:
+      - name: Check the secret
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::error::Add the DEMO_DATABASE_URL repository secret first"
+            exit 1
+          fi
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - run: alembic upgrade head
+      - run: python -m scripts.seed_demo --reset

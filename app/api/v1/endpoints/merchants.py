@@ -3,6 +3,7 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.deps import forbid_in_demo
 from app.db.models import Merchant
 from app.db.schemas import MerchantCreateRequest, MerchantResponse
 from app.db.session import get_db
@@ -10,7 +11,12 @@ from app.db.session import get_db
 router = APIRouter(prefix="/merchants", tags=["merchants"])
 
 
-@router.post("/", response_model=MerchantResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/",
+    response_model=MerchantResponse,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(forbid_in_demo)],
+)
 async def create_merchant(payload: MerchantCreateRequest, db: AsyncSession = Depends(get_db)) -> Merchant:
     merchant = Merchant(**payload.model_dump())
     db.add(merchant)
