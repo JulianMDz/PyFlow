@@ -10,7 +10,5 @@ router = APIRouter(prefix="/payments", tags=["payments"])
 
 
 @router.post("/", response_model=PaymentResponse, status_code=status.HTTP_201_CREATED)
-async def create_payment(
-    payload: PaymentCreateRequest, db: AsyncSession = Depends(get_db)
-) -> Payment:
+async def create_payment(payload: PaymentCreateRequest, db: AsyncSession = Depends(get_db)) -> Payment:
     return await payment_service.process_payment(db, payload)

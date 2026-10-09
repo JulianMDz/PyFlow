@@ -1,4 +1,7 @@
-const usd = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" })
+const usd = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+})
 
 // Display only: the API sends exact decimal strings, and any arithmetic on
 // money happens on the server. Number() here is just for formatting.

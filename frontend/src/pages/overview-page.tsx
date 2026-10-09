@@ -1,9 +1,20 @@
 import { useQuery } from "@tanstack/react-query"
-import { CircleDollarSign, Clock, ShoppingBag, TriangleAlert } from "lucide-react"
+import {
+  CircleDollarSign,
+  Clock,
+  ShoppingBag,
+  TriangleAlert,
+} from "lucide-react"
 
 import { ErrorAlert, PageHeader } from "@/components/query-state"
 import { RevenueChart } from "@/components/revenue-chart"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { api } from "@/lib/api"
 import { formatDate, formatMoney, formatPercent } from "@/lib/format"
@@ -26,13 +37,23 @@ function MetricCard({
     <Card>
       <CardHeader className="flex flex-row items-center justify-between gap-2">
         <CardDescription>{title}</CardDescription>
-        <Icon className={cn("size-4 text-muted-foreground", alert && "text-red-500")} />
+        <Icon
+          className={cn(
+            "size-4 text-muted-foreground",
+            alert && "text-red-500"
+          )}
+        />
       </CardHeader>
       <CardContent className="space-y-1">
         {value === undefined ? (
           <Skeleton className="h-8 w-24" />
         ) : (
-          <p className={cn("text-3xl font-semibold tabular-nums", alert && "text-red-600 dark:text-red-400")}>
+          <p
+            className={cn(
+              "text-3xl font-semibold tabular-nums",
+              alert && "text-red-600 dark:text-red-400"
+            )}
+          >
             {value}
           </p>
         )}
@@ -44,20 +65,34 @@ function MetricCard({
 
 export function OverviewPage() {
   const summary = useQuery({ queryKey: ["summary"], queryFn: api.summary })
-  const revenue = useQuery({ queryKey: ["revenue", "", ""], queryFn: () => api.revenue() })
+  const revenue = useQuery({
+    queryKey: ["revenue", "", ""],
+    queryFn: () => api.revenue(),
+  })
   const s = summary.data
 
   return (
     <div className="space-y-6">
       <PageHeader
         title="Overview"
-        description={s ? `Platform health as of ${formatDate(s.as_of)} (UTC)` : "Platform health at a glance"}
+        description={
+          s
+            ? `Platform health as of ${formatDate(s.as_of)} (UTC)`
+            : "Platform health at a glance"
+        }
       />
 
-      {summary.isError && <ErrorAlert error={summary.error} title="Couldn't load the summary" />}
+      {summary.isError && (
+        <ErrorAlert error={summary.error} title="Couldn't load the summary" />
+      )}
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <MetricCard title="Active orders" value={s?.active_orders.toString()} hint="Orders still being paid" icon={ShoppingBag} />
+        <MetricCard
+          title="Active orders"
+          value={s?.active_orders.toString()}
+          hint="Orders still being paid"
+          icon={ShoppingBag}
+        />
         <MetricCard
           title="Total revenue"
           value={s && formatMoney(s.total_revenue)}
@@ -82,13 +117,18 @@ export function OverviewPage() {
       <Card>
         <CardHeader>
           <CardTitle>Revenue, last 12 months</CardTitle>
-          <CardDescription>Merchant commissions on non-cancelled orders, by month created</CardDescription>
+          <CardDescription>
+            Merchant commissions on non-cancelled orders, by month created
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {revenue.isError ? (
             <ErrorAlert error={revenue.error} title="Couldn't load revenue" />
           ) : revenue.data ? (
-            <RevenueChart data={revenue.data.by_month} className="h-72 w-full" />
+            <RevenueChart
+              data={revenue.data.by_month}
+              className="h-72 w-full"
+            />
           ) : (
             <Skeleton className="h-72 w-full" />
           )}

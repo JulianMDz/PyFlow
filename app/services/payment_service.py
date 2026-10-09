@@ -1,6 +1,7 @@
 from datetime import UTC, date, datetime
+from typing import Any, cast
 
-from sqlalchemy import select, update
+from sqlalchemy import CursorResult, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import Installment, Payment
@@ -31,9 +32,7 @@ async def process_payment(
     if installment.status not in PAYABLE_STATUSES:
         raise ConflictError(f"Installment is not payable (status: {installment.status})")
     if payload.amount != installment.amount:
-        raise BusinessRuleError(
-            f"Payment amount must equal the installment amount ({installment.amount})"
-        )
+        raise BusinessRuleError(f"Payment amount must equal the installment amount ({installment.amount})")
 
     payment = Payment(
         installment_id=installment.installment_id,
@@ -57,11 +56,15 @@ async def mark_overdue_installments(db: AsyncSession, today: date | None = None)
     Idempotent: running it twice on the same day updates nothing the second time.
     """
     today = today or today_utc()
-    result = await db.execute(
-        update(Installment)
-        .where(Installment.status == "pending", Installment.due_date < today)
-        .values(status="overdue")
-        .execution_options(synchronize_session=False)
+    # A bulk UPDATE returns a CursorResult, which is the type that carries rowcount
+    result = cast(
+        CursorResult[Any],
+        await db.execute(
+            update(Installment)
+            .where(Installment.status == "pending", Installment.due_date < today)
+            .values(status="overdue")
+            .execution_options(synchronize_session=False)
+        ),
     )
     await db.commit()
     return result.rowcount

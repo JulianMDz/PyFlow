@@ -32,27 +32,34 @@ RECOMMENDATION_FOR: dict[RiskLevel, Recommendation] = {
 
 # Literal braces of the JSON schema are doubled because the prompt goes through str.format()
 RISK_PROMPT = """
-Eres un motor de scoring de riesgo crediticio para una plataforma BNPL.
-Analiza los siguientes datos y responde SOLO con JSON válido.
+You are the credit risk engine of an installment payments (buy now, pay later) platform.
+Estimate the risk that this customer misses payments on the requested purchase.
+Reply with valid JSON only.
 
-Historial del usuario:
-- Órdenes totales: {total_orders}
-- Cuotas pagadas a tiempo: {on_time_payments}
-- Cuotas vencidas (pagadas con atraso o vencidas sin pagar): {late_payments}
-- Cuotas pendientes activas: {active_installments}
-- Monto solicitado: ${requested_amount}
-- Monto promedio histórico: ${avg_order_amount}
+Customer history (excluding this purchase):
+- Previous orders: {total_orders}
+- Installments paid on time: {on_time_payments}
+- Late installments (paid late, or overdue and unpaid): {late_payments}
+- Active installments still to pay: {active_installments}
+- Requested amount: ${requested_amount}
+- Average previous order: ${avg_order_amount}
 
-El score mide el RIESGO: 0 = riesgo mínimo, 100 = riesgo máximo.
-risk_level: LOW si score < 40, MEDIUM si score está entre 40 y 70, HIGH si score > 70.
-recommendation: LOW → APPROVE, MEDIUM → REVIEW, HIGH → DENY.
+The score measures RISK: 0 = lowest risk, 100 = highest risk.
+Calibration:
+- Late installments are the strongest signal: one means moderate risk (55-70), two or more high risk (75+).
+- No history is not high risk by itself: a typical first purchase scores 20-35, a large one (over $500) 40-55.
+- On-time payments and no late ones mean low risk (5-25).
+- An amount over twice the customer's average, or 8+ active installments, means moderate
+  risk (40-60) even with a clean history: these customers need a review.
+risk_level: LOW if score < 40, MEDIUM if score is 40-70, HIGH if score > 70.
+recommendation: LOW -> APPROVE, MEDIUM -> REVIEW, HIGH -> DENY.
 
-Schema de respuesta (exacto):
+Response schema (exact):
 {{
   "score": <int 0-100>,
   "risk_level": <"LOW" | "MEDIUM" | "HIGH">,
   "recommendation": <"APPROVE" | "REVIEW" | "DENY">,
-  "reasoning": <string, máximo 100 caracteres>
+  "reasoning": <one sentence in English, at most 100 characters>
 }}
 """
 
@@ -109,6 +116,10 @@ async def build_risk_features(db: AsyncSession, order: Order, today: date) -> Ri
     )
 
 
+def _count(n: int, noun: str) -> str:
+    return f"{n} {noun}{'' if n == 1 else 's'}"
+
+
 def score_with_rules(features: RiskFeatures) -> tuple[int, str]:
     """Deterministic fallback when the LLM is unavailable.
 
@@ -119,23 +130,23 @@ def score_with_rules(features: RiskFeatures) -> tuple[int, str]:
     reasons: list[str] = []
     if features.late_payments:
         score += 25 * features.late_payments
-        reasons.append(f"{features.late_payments} cuota(s) con atraso")
+        reasons.append(_count(features.late_payments, "late installment"))
     if features.on_time_payments:
         score -= min(3 * features.on_time_payments, 15)
-        reasons.append(f"{features.on_time_payments} pagada(s) a tiempo")
+        reasons.append(f"{features.on_time_payments} paid on time")
     if features.active_installments:
         score += 2 * features.active_installments
-        reasons.append(f"{features.active_installments} cuota(s) activas")
+        reasons.append(_count(features.active_installments, "active installment"))
     if features.total_orders == 0:
-        reasons.append("sin historial")
+        reasons.append("no history")
         if features.requested_amount > 500:
             score += 15
-            reasons.append("monto alto para una primera compra")
+            reasons.append("large first purchase")
     elif features.requested_amount > 2 * features.avg_order_amount:
         score += 15
-        reasons.append("monto mayor al doble de su promedio")
+        reasons.append("over twice their average order")
 
-    reasoning = ("Reglas: " + ", ".join(reasons))[:REASONING_MAX_CHARS]
+    reasoning = ("Rules: " + ", ".join(reasons))[:REASONING_MAX_CHARS]
     return max(0, min(100, score)), reasoning
 
 

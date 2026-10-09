@@ -37,11 +37,17 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   try {
     response = await fetch(`${API_URL}${path}`, init)
   } catch {
-    throw new ApiError(0, `Can't reach the API at ${API_URL}. Is the backend running?`)
+    throw new ApiError(
+      0,
+      `Can't reach the API at ${API_URL}. Is the backend running?`
+    )
   }
   if (!response.ok) {
     const body = await response.json().catch(() => null)
-    throw new ApiError(response.status, errorMessage(body) ?? `Request failed (${response.status})`)
+    throw new ApiError(
+      response.status,
+      errorMessage(body) ?? `Request failed (${response.status})`
+    )
   }
   return (await response.json()) as T
 }
@@ -65,5 +71,7 @@ export const api = {
     request<OrderPage>(`/orders/${query(params)}`),
 
   assessRisk: (orderId: string) =>
-    request<RiskAssessment>(`/orders/${encodeURIComponent(orderId)}/risk`, { method: "POST" }),
+    request<RiskAssessment>(`/orders/${encodeURIComponent(orderId)}/risk`, {
+      method: "POST",
+    }),
 }

@@ -28,7 +28,7 @@ async def create_user(payload: UserCreateRequest, db: AsyncSession = Depends(get
         await db.commit()
     except IntegrityError:
         await db.rollback()
-        raise HTTPException(status.HTTP_409_CONFLICT, detail="Email already registered")
+        raise HTTPException(status.HTTP_409_CONFLICT, detail="Email already registered") from None
     await db.refresh(user)
     return user
 

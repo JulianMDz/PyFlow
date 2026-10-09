@@ -29,8 +29,7 @@ def split_amount(total: Decimal, num_installments: int) -> list[Decimal]:
         raise BusinessRuleError("num_installments must be at least 1")
     if total < CENT * num_installments:
         raise BusinessRuleError(
-            f"total_amount must be at least {CENT * num_installments} "
-            f"for {num_installments} installments"
+            f"total_amount must be at least {CENT * num_installments} for {num_installments} installments"
         )
 
     base = (total / num_installments).quantize(CENT, rounding=ROUND_DOWN)
@@ -43,9 +42,7 @@ def build_due_dates(start: date, num_installments: int) -> list[date]:
     return [start + INSTALLMENT_INTERVAL * (i + 1) for i in range(num_installments)]
 
 
-async def user_has_overdue_installments(
-    db: AsyncSession, user_id: uuid.UUID, today: date
-) -> bool:
+async def user_has_overdue_installments(db: AsyncSession, user_id: uuid.UUID, today: date) -> bool:
     stmt = select(
         exists()
         .where(Installment.order_id == Order.order_id)
@@ -98,9 +95,7 @@ async def list_orders(
     return list(orders.all()), total or 0
 
 
-async def create_order(
-    db: AsyncSession, payload: OrderCreateRequest, today: date | None = None
-) -> Order:
+async def create_order(db: AsyncSession, payload: OrderCreateRequest, today: date | None = None) -> Order:
     today = today or today_utc()
 
     if await db.get(User, payload.user_id) is None:

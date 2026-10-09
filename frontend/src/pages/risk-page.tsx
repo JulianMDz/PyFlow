@@ -7,7 +7,13 @@ import { ErrorAlert, PageHeader } from "@/components/query-state"
 import { RiskBadge, scoreBarColor, scoreTone } from "@/components/status-badge"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
@@ -16,7 +22,8 @@ import { formatMoney } from "@/lib/format"
 import type { RiskAssessment } from "@/lib/types"
 import { cn } from "@/lib/utils"
 
-const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 function RiskResult({ result }: { result: RiskAssessment }) {
   const f = result.features
@@ -32,28 +39,51 @@ function RiskResult({ result }: { result: RiskAssessment }) {
   return (
     <Card>
       <CardHeader>
-        <CardDescription className="font-mono text-xs">Order {result.order_id}</CardDescription>
+        <CardDescription className="font-mono text-xs">
+          Order {result.order_id}
+        </CardDescription>
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <p className={cn("text-6xl font-semibold tabular-nums", scoreTone(result.score))}>{result.score}</p>
-            <p className="text-sm text-muted-foreground">risk score · 0 = lowest, 100 = highest</p>
+            <p
+              className={cn(
+                "text-6xl font-semibold tabular-nums",
+                scoreTone(result.score)
+              )}
+            >
+              {result.score}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              risk score · 0 = lowest, 100 = highest
+            </p>
           </div>
           <div className="flex gap-2">
             <RiskBadge value={result.risk_level} />
             <RiskBadge value={result.recommendation} />
           </div>
         </div>
-        <div className="h-2 w-full overflow-hidden rounded-full bg-muted" role="presentation">
-          <div className={cn("h-full rounded-full", scoreBarColor(result.score))} style={{ width: `${result.score}%` }} />
+        <div
+          className="h-2 w-full overflow-hidden rounded-full bg-muted"
+          role="presentation"
+        >
+          <div
+            className={cn("h-full rounded-full", scoreBarColor(result.score))}
+            style={{ width: `${result.score}%` }}
+          />
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-sm font-medium">
-            {result.source === "llm" ? <Bot className="size-4" /> : <ScrollText className="size-4" />}
+            {result.source === "llm" ? (
+              <Bot className="size-4" />
+            ) : (
+              <ScrollText className="size-4" />
+            )}
             Reasoning
             <Badge variant="secondary">
-              {result.source === "llm" ? `AI · ${result.llm_model}` : "Rules fallback (AI unavailable)"}
+              {result.source === "llm"
+                ? `AI · ${result.llm_model}`
+                : "Rules fallback (AI unavailable)"}
             </Badge>
           </div>
           <p className="text-sm text-muted-foreground">{result.reasoning}</p>
@@ -70,8 +100,9 @@ function RiskResult({ result }: { result: RiskAssessment }) {
             ))}
           </dl>
           <p className="mt-3 text-xs text-muted-foreground">
-            Only these aggregated numbers are sent to the model — never names or emails. Level and recommendation
-            come from fixed thresholds in code, and late payments always require a review.
+            Only these aggregated numbers are sent to the model — never names or
+            emails. Level and recommendation come from fixed thresholds in code,
+            and late payments always require a review.
           </p>
         </div>
       </CardContent>
@@ -103,7 +134,9 @@ export function RiskPage() {
       <Card>
         <CardHeader>
           <CardTitle>Analyze an order</CardTitle>
-          <CardDescription>Paste an order ID, or use the Check button on the Orders page.</CardDescription>
+          <CardDescription>
+            Paste an order ID, or use the Check button on the Orders page.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={submit} className="flex flex-wrap items-end gap-3">
@@ -125,12 +158,16 @@ export function RiskPage() {
             </Button>
           </form>
           {trimmed !== "" && !looksValid && (
-            <p className="mt-2 text-xs text-destructive">That doesn't look like an order ID (a UUID).</p>
+            <p className="mt-2 text-xs text-destructive">
+              That doesn't look like an order ID (a UUID).
+            </p>
           )}
         </CardContent>
       </Card>
 
-      {assess.isError && <ErrorAlert error={assess.error} title="Couldn't score this order" />}
+      {assess.isError && (
+        <ErrorAlert error={assess.error} title="Couldn't score this order" />
+      )}
       {assess.data && <RiskResult result={assess.data} />}
     </div>
   )

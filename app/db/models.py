@@ -42,9 +42,7 @@ class User(Base):
     )
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True)
     full_name: Mapped[str] = mapped_column(String(255))
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     orders: Mapped[list["Order"]] = relationship(back_populates="user")
 
@@ -52,9 +50,7 @@ class User(Base):
 class Merchant(Base):
     __tablename__ = "merchants"
     __table_args__ = (
-        CheckConstraint(
-            "commission_rate >= 0 AND commission_rate <= 1", name="commission_rate_range"
-        ),
+        CheckConstraint("commission_rate >= 0 AND commission_rate <= 1", name="commission_rate_range"),
     )
 
     merchant_id: Mapped[uuid.UUID] = mapped_column(
@@ -73,26 +69,20 @@ class Order(Base):
     __table_args__ = (
         CheckConstraint("total_amount > 0", name="total_amount_positive"),
         CheckConstraint("num_installments > 0", name="num_installments_positive"),
-        CheckConstraint(
-            "status IN ('active', 'completed', 'cancelled')", name="status_valid"
-        ),
+        CheckConstraint("status IN ('active', 'completed', 'cancelled')", name="status_valid"),
     )
 
     order_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, server_default=UUID_PK_DEFAULT
     )
-    user_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("users.user_id", ondelete="RESTRICT"), index=True
-    )
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.user_id", ondelete="RESTRICT"), index=True)
     merchant_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("merchants.merchant_id", ondelete="RESTRICT"), index=True
     )
     total_amount: Mapped[Decimal] = mapped_column(Numeric(12, 2))
     num_installments: Mapped[int] = mapped_column(Integer, server_default=text("4"))
     status: Mapped[str] = mapped_column(String(20), server_default=text("'active'"))
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     user: Mapped["User"] = relationship(back_populates="orders")
     merchant: Mapped["Merchant"] = relationship(back_populates="orders")
@@ -107,22 +97,16 @@ class Installment(Base):
     __tablename__ = "installments"
     __table_args__ = (
         CheckConstraint("amount > 0", name="amount_positive"),
-        CheckConstraint(
-            "status IN ('pending', 'paid', 'overdue', 'cancelled')", name="status_valid"
-        ),
+        CheckConstraint("status IN ('pending', 'paid', 'overdue', 'cancelled')", name="status_valid"),
     )
 
     installment_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, server_default=UUID_PK_DEFAULT
     )
-    order_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("orders.order_id", ondelete="CASCADE"), index=True
-    )
+    order_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("orders.order_id", ondelete="CASCADE"), index=True)
     due_date: Mapped[date] = mapped_column(Date, index=True)
     amount: Mapped[Decimal] = mapped_column(Numeric(12, 2))
-    status: Mapped[str] = mapped_column(
-        String(20), server_default=text("'pending'"), index=True
-    )
+    status: Mapped[str] = mapped_column(String(20), server_default=text("'pending'"), index=True)
     paid_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     order: Mapped["Order"] = relationship(back_populates="installments")
@@ -141,8 +125,6 @@ class Payment(Base):
     )
     method: Mapped[str] = mapped_column(String(30))
     amount: Mapped[Decimal] = mapped_column(Numeric(12, 2))
-    processed_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
-    )
+    processed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     installment: Mapped["Installment"] = relationship(back_populates="payments")

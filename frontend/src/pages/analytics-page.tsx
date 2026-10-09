@@ -2,11 +2,27 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query"
 import { useState } from "react"
 
 import { ErrorAlert, PageHeader } from "@/components/query-state"
-import { METRICS, RevenueChart, type RevenueMetric } from "@/components/revenue-chart"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  METRICS,
+  RevenueChart,
+  type RevenueMetric,
+} from "@/components/revenue-chart"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
 import { api } from "@/lib/api"
 import { formatMoney } from "@/lib/format"
@@ -19,7 +35,8 @@ export function AnalyticsPage() {
 
   const report = useQuery({
     queryKey: ["revenue", range.start, range.end],
-    queryFn: () => api.revenue(range.start || undefined, range.end || undefined),
+    queryFn: () =>
+      api.revenue(range.start || undefined, range.end || undefined),
     enabled: !invalidRange,
     placeholderData: keepPreviousData,
   })
@@ -27,11 +44,18 @@ export function AnalyticsPage() {
 
   // Editing one date keeps the other one the API is currently showing
   const updateRange = (field: "start" | "end", value: string) =>
-    setRange({ start: range.start || data?.start || "", end: range.end || data?.end || "", [field]: value })
+    setRange({
+      start: range.start || data?.start || "",
+      end: range.end || data?.end || "",
+      [field]: value,
+    })
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Analytics" description="GMV, commission revenue and collected payments by month (UTC)" />
+      <PageHeader
+        title="Analytics"
+        description="GMV, commission revenue and collected payments by month (UTC)"
+      />
 
       <Card>
         <CardContent className="flex flex-wrap items-end gap-4">
@@ -57,7 +81,10 @@ export function AnalyticsPage() {
           </div>
           <div className="space-y-2">
             <Label>Chart metric</Label>
-            <Select value={metric} onValueChange={(value) => setMetric(value as RevenueMetric)}>
+            <Select
+              value={metric}
+              onValueChange={(value) => setMetric(value as RevenueMetric)}
+            >
               <SelectTrigger className="w-56">
                 <SelectValue />
               </SelectTrigger>
@@ -73,8 +100,15 @@ export function AnalyticsPage() {
         </CardContent>
       </Card>
 
-      {invalidRange && <ErrorAlert error={new Error("'From' must be on or before 'To'.")} title="Invalid range" />}
-      {report.isError && <ErrorAlert error={report.error} title="Couldn't load the report" />}
+      {invalidRange && (
+        <ErrorAlert
+          error={new Error("'From' must be on or before 'To'.")}
+          title="Invalid range"
+        />
+      )}
+      {report.isError && (
+        <ErrorAlert error={report.error} title="Couldn't load the report" />
+      )}
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {(
@@ -88,7 +122,9 @@ export function AnalyticsPage() {
           <Card key={title}>
             <CardHeader>
               <CardDescription>{title}</CardDescription>
-              <CardTitle className="text-2xl tabular-nums">{value ?? <Skeleton className="h-8 w-24" />}</CardTitle>
+              <CardTitle className="text-2xl tabular-nums">
+                {value ?? <Skeleton className="h-8 w-24" />}
+              </CardTitle>
             </CardHeader>
           </Card>
         ))}
@@ -98,12 +134,17 @@ export function AnalyticsPage() {
         <CardHeader>
           <CardTitle>{METRICS[metric].label} by month</CardTitle>
           <CardDescription>
-            Orders count in the month they were created; payments in the month they were processed.
+            Orders count in the month they were created; payments in the month
+            they were processed.
           </CardDescription>
         </CardHeader>
         <CardContent>
           {data ? (
-            <RevenueChart data={data.by_month} metric={metric} className="h-80 w-full" />
+            <RevenueChart
+              data={data.by_month}
+              metric={metric}
+              className="h-80 w-full"
+            />
           ) : (
             <Skeleton className="h-80 w-full" />
           )}

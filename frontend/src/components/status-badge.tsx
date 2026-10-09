@@ -1,11 +1,18 @@
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
-import type { InstallmentStatus, OrderStatus, Recommendation, RiskLevel } from "@/lib/types"
+import type {
+  InstallmentStatus,
+  OrderStatus,
+  Recommendation,
+  RiskLevel,
+} from "@/lib/types"
 
-// Status colors from CLAUDE.md: pending=yellow, paid=green, overdue=red, active=blue
+// Status colors: pending=yellow, paid=green, overdue=red, active=blue
 const TONES = {
-  yellow: "border-amber-500/30 bg-amber-500/15 text-amber-700 dark:text-amber-300",
-  green: "border-emerald-500/30 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
+  yellow:
+    "border-amber-500/30 bg-amber-500/15 text-amber-700 dark:text-amber-300",
+  green:
+    "border-emerald-500/30 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
   red: "border-red-500/30 bg-red-500/15 text-red-700 dark:text-red-300",
   blue: "border-sky-500/30 bg-sky-500/15 text-sky-700 dark:text-sky-300",
   gray: "border-border bg-muted text-muted-foreground",
@@ -31,7 +38,13 @@ const RISK_TONE: Record<RiskLevel | Recommendation, Tone> = {
   DENY: "red",
 }
 
-function ToneBadge({ tone, children }: { tone: Tone; children: React.ReactNode }) {
+function ToneBadge({
+  tone,
+  children,
+}: {
+  tone: Tone
+  children: React.ReactNode
+}) {
   return (
     <Badge variant="outline" className={cn("capitalize", TONES[tone])}>
       {children}
@@ -39,7 +52,11 @@ function ToneBadge({ tone, children }: { tone: Tone; children: React.ReactNode }
   )
 }
 
-export function StatusBadge({ status }: { status: OrderStatus | InstallmentStatus }) {
+export function StatusBadge({
+  status,
+}: {
+  status: OrderStatus | InstallmentStatus
+}) {
   return <ToneBadge tone={STATUS_TONE[status]}>{status}</ToneBadge>
 }
 
@@ -47,7 +64,7 @@ export function RiskBadge({ value }: { value: RiskLevel | Recommendation }) {
   return <ToneBadge tone={RISK_TONE[value]}>{value.toLowerCase()}</ToneBadge>
 }
 
-// Risk score colors from CLAUDE.md: green < 40, yellow 40–70, red > 70
+// Risk score colors: green < 40, yellow 40–70, red > 70
 export function scoreTone(score: number): string {
   if (score < 40) return "text-emerald-600 dark:text-emerald-400"
   if (score <= 70) return "text-amber-600 dark:text-amber-400"

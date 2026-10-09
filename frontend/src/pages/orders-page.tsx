@@ -7,9 +7,22 @@ import { ErrorAlert, PageHeader } from "@/components/query-state"
 import { StatusBadge } from "@/components/status-badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 import { api } from "@/lib/api"
 import { formatDate, formatDateTime, formatMoney, shortId } from "@/lib/format"
 import type { OrderListItem, OrderStatus } from "@/lib/types"
@@ -21,7 +34,8 @@ function InstallmentsDetail({ order }: { order: OrderListItem }) {
   return (
     <div className="space-y-2 px-4 py-3">
       <p className="text-xs text-muted-foreground">
-        {order.merchant.name} · {order.user.full_name} ({order.user.email}) · order {order.order_id}
+        {order.merchant.name} · {order.user.full_name} ({order.user.email}) ·
+        order {order.order_id}
       </p>
       <Table>
         <TableHeader>
@@ -36,13 +50,19 @@ function InstallmentsDetail({ order }: { order: OrderListItem }) {
         <TableBody>
           {order.installments.map((inst, index) => (
             <TableRow key={inst.installment_id}>
-              <TableCell className="text-muted-foreground">{index + 1}</TableCell>
+              <TableCell className="text-muted-foreground">
+                {index + 1}
+              </TableCell>
               <TableCell>{formatDate(inst.due_date)}</TableCell>
-              <TableCell className="text-right font-mono tabular-nums">{formatMoney(inst.amount)}</TableCell>
+              <TableCell className="text-right font-mono tabular-nums">
+                {formatMoney(inst.amount)}
+              </TableCell>
               <TableCell>
                 <StatusBadge status={inst.status} />
               </TableCell>
-              <TableCell className="text-muted-foreground">{inst.paid_at ? formatDateTime(inst.paid_at) : "—"}</TableCell>
+              <TableCell className="text-muted-foreground">
+                {inst.paid_at ? formatDateTime(inst.paid_at) : "—"}
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>
@@ -59,15 +79,24 @@ export function OrdersPage() {
 
   const orders = useQuery({
     queryKey: ["orders", status, offset],
-    queryFn: () => api.orders({ status: status === ALL ? undefined : status, limit: PAGE_SIZE, offset }),
+    queryFn: () =>
+      api.orders({
+        status: status === ALL ? undefined : status,
+        limit: PAGE_SIZE,
+        offset,
+      }),
     placeholderData: keepPreviousData,
   })
   const page = orders.data
-  const toggle = (orderId: string) => setExpanded((current) => (current === orderId ? null : orderId))
+  const toggle = (orderId: string) =>
+    setExpanded((current) => (current === orderId ? null : orderId))
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Orders" description="Every purchase split into installments. Click a row to see its schedule." />
+      <PageHeader
+        title="Orders"
+        description="Every purchase split into installments. Click a row to see its schedule."
+      />
 
       <div className="flex flex-wrap items-center justify-between gap-4">
         <Select
@@ -97,7 +126,9 @@ export function OrdersPage() {
         )}
       </div>
 
-      {orders.isError && <ErrorAlert error={orders.error} title="Couldn't load orders" />}
+      {orders.isError && (
+        <ErrorAlert error={orders.error} title="Couldn't load orders" />
+      )}
 
       <Card className="py-0">
         <CardContent className="px-0">
@@ -126,17 +157,24 @@ export function OrdersPage() {
                   </TableRow>
                 ))}
               {page?.items.map((order) => {
-                const paid = order.installments.filter((i) => i.status === "paid").length
+                const paid = order.installments.filter(
+                  (i) => i.status === "paid"
+                ).length
                 const isOpen = expanded === order.order_id
                 return (
                   <Fragment key={order.order_id}>
-                    <TableRow className="cursor-pointer" onClick={() => toggle(order.order_id)}>
+                    <TableRow
+                      className="cursor-pointer"
+                      onClick={() => toggle(order.order_id)}
+                    >
                       <TableCell>
                         <Button
                           variant="ghost"
                           size="icon-xs"
                           aria-expanded={isOpen}
-                          aria-label={isOpen ? "Hide installments" : "Show installments"}
+                          aria-label={
+                            isOpen ? "Hide installments" : "Show installments"
+                          }
                           onClick={(e) => {
                             e.stopPropagation()
                             toggle(order.order_id)
@@ -145,17 +183,25 @@ export function OrdersPage() {
                           {isOpen ? <ChevronDown /> : <ChevronRight />}
                         </Button>
                       </TableCell>
-                      <TableCell className="font-mono text-xs">{shortId(order.order_id)}</TableCell>
-                      <TableCell className="max-w-56 truncate">{order.user.email}</TableCell>
+                      <TableCell className="font-mono text-xs">
+                        {shortId(order.order_id)}
+                      </TableCell>
+                      <TableCell className="max-w-56 truncate">
+                        {order.user.email}
+                      </TableCell>
                       <TableCell>{order.merchant.name}</TableCell>
-                      <TableCell className="text-right font-mono tabular-nums">{formatMoney(order.total_amount)}</TableCell>
+                      <TableCell className="text-right font-mono tabular-nums">
+                        {formatMoney(order.total_amount)}
+                      </TableCell>
                       <TableCell className="tabular-nums">
                         {paid}/{order.installments.length}
                       </TableCell>
                       <TableCell>
                         <StatusBadge status={order.status} />
                       </TableCell>
-                      <TableCell className="text-muted-foreground">{formatDate(order.created_at)}</TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {formatDate(order.created_at)}
+                      </TableCell>
                       <TableCell className="text-right">
                         <Button
                           variant="outline"
@@ -181,7 +227,10 @@ export function OrdersPage() {
               })}
               {page?.items.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={9} className="py-10 text-center text-muted-foreground">
+                  <TableCell
+                    colSpan={9}
+                    className="py-10 text-center text-muted-foreground"
+                  >
                     No orders match this filter.
                   </TableCell>
                 </TableRow>
@@ -201,7 +250,9 @@ export function OrdersPage() {
         </Button>
         <Button
           variant="outline"
-          disabled={!page || offset + PAGE_SIZE >= page.total || orders.isFetching}
+          disabled={
+            !page || offset + PAGE_SIZE >= page.total || orders.isFetching
+          }
           onClick={() => setOffset(offset + PAGE_SIZE)}
         >
           Next

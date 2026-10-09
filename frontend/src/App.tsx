@@ -1,4 +1,11 @@
-import { BarChart3, LayoutDashboard, Moon, ReceiptText, ShieldCheck, Sun } from "lucide-react"
+import {
+  BarChart3,
+  LayoutDashboard,
+  Moon,
+  ReceiptText,
+  ShieldCheck,
+  Sun,
+} from "lucide-react"
 import { NavLink, Route, Routes } from "react-router"
 
 import { useTheme } from "@/components/theme-provider"

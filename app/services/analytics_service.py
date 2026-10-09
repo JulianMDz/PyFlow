@@ -1,8 +1,9 @@
-from datetime import date
+from datetime import date, datetime
 from decimal import ROUND_HALF_UP, Decimal
 
 from sqlalchemy import ColumnElement, Date, cast, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import InstrumentedAttribute
 
 from app.db.models import Installment, Merchant, Order, Payment
 from app.db.schemas import (
@@ -22,12 +23,17 @@ def money(value: Decimal | int | None) -> Decimal:
     return Decimal(value or 0).quantize(CENT, rounding=ROUND_HALF_UP)
 
 
-def utc_day(column: ColumnElement) -> ColumnElement[date]:
+def utc_day(column: InstrumentedAttribute[datetime]) -> ColumnElement[date]:
     return cast(func.timezone("UTC", column), Date)
 
 
-def utc_month(column: ColumnElement) -> ColumnElement[str]:
+def utc_month(column: InstrumentedAttribute[datetime]) -> ColumnElement[str]:
     return func.to_char(func.timezone("UTC", column), "YYYY-MM")
+
+
+def commission_per_order() -> ColumnElement[Decimal]:
+    """Each order's fee, rounded to the cent like a real charge, so every total adds up."""
+    return func.round(Order.total_amount * Merchant.commission_rate, 2)
 
 
 def default_start(end: date) -> date:
@@ -63,7 +69,7 @@ async def revenue_report(
             order_month,
             func.count(),
             func.sum(Order.total_amount),
-            func.sum(Order.total_amount * Merchant.commission_rate),
+            func.sum(commission_per_order()),
         )
         .join(Merchant, Order.merchant_id == Merchant.merchant_id)
         .where(Order.status != "cancelled", utc_day(Order.created_at).between(start, end))
@@ -109,9 +115,7 @@ async def dashboard_summary(db: AsyncSession, today: date | None = None) -> Dash
         await db.execute(
             select(
                 func.count().filter(Order.status == "active"),
-                func.sum(Order.total_amount * Merchant.commission_rate).filter(
-                    Order.status != "cancelled"
-                ),
+                func.sum(commission_per_order()).filter(Order.status != "cancelled"),
             ).join(Merchant, Order.merchant_id == Merchant.merchant_id)
         )
     ).one()

@@ -11,9 +11,7 @@ router = APIRouter(prefix="/merchants", tags=["merchants"])
 
 
 @router.post("/", response_model=MerchantResponse, status_code=status.HTTP_201_CREATED)
-async def create_merchant(
-    payload: MerchantCreateRequest, db: AsyncSession = Depends(get_db)
-) -> Merchant:
+async def create_merchant(payload: MerchantCreateRequest, db: AsyncSession = Depends(get_db)) -> Merchant:
     merchant = Merchant(**payload.model_dump())
     db.add(merchant)
     await db.commit()
